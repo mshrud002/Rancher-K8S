@@ -7,7 +7,7 @@ RANCHER_VERSION="${RANCHER_VERSION:-2.10.3}"
 TLS_SOURCE="${TLS_SOURCE:-selfsigned}"
 BOOTSTRAP_PASSWORD="${BOOTSTRAP_PASSWORD:-admin}"
 
-RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; CYAN='\033[0;36m'; NC='\033[0m'
+RED='\033[0;31m'; GREEN='\033[0;32m'; CYAN='\033[0;36m'; NC='\033[0m'
 info()  { echo -e "${GREEN}[INFO]${NC}  $*"; }
 error() { echo -e "${RED}[ERROR]${NC} $*"; }
 header(){ echo -e "\n${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"; echo -e "${CYAN}  $*${NC}"; echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"; }

@@ -257,7 +257,7 @@ post_install() {
     if [[ -n "$bp" ]]; then
       echo "  Bootstrap password: ${bp}"
     else
-      echo "  (retrieve it later with: kubectl get secret --namespace ${NAMESPACE} bootstrap-secret -o jsonpath="{.data.bootstrapPassword}" | base64 -d)"
+      echo "  (retrieve it later with: kubectl get secret --namespace ${NAMESPACE} bootstrap-secret -o jsonpath='{.data.bootstrapPassword}' | base64 -d)"
     fi
   fi
 }
