@@ -1,0 +1,54 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate release artifacts
+        run: |
+          mkdir -p dist
+          tar czf dist/rancher-k8s-deployer.tar.gz \
+            scripts/ config/ tls/ README.md
+          zip -r dist/rancher-k8s-deployer.zip \
+            scripts/ config/ tls/ README.md
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          cat <<EOF > dist/RELEASE_NOTES.md
+          # Rancher-K8S Deployer v${VERSION}
+
+          Deploy Rancher on any Kubernetes cluster.
+
+          ## Installation
+
+          \`\`\`bash
+          tar xzf rancher-k8s-deployer.tar.gz
+          cd rancher-k8s-deployer
+          ./scripts/deploy-rancher.sh
+          \`\`\`
+
+          ## Changelog
+
+          See the [commit log](https://github.com/${{ github.repository }}/commits/${GITHUB_REF_NAME}) for details.
+          EOF
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2.2.1
+        with:
+          body_path: dist/RELEASE_NOTES.md
+          files: |
+            dist/rancher-k8s-deployer.tar.gz
+            dist/rancher-k8s-deployer.zip

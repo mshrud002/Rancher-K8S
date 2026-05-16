@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+env:
+  SHELLCHECK_VERSION: v0.10.0
+
+jobs:
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ShellCheck
+        run: |
+          wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz" \
+            | tar -xJ -C /tmp
+          sudo mv "/tmp/shellcheck-${SHELLCHECK_VERSION}/shellcheck" /usr/local/bin/
+
+      - name: Run ShellCheck
+        run: |
+          find scripts/ tls/ -name '*.sh' -print0 | xargs -0 shellcheck -x -s bash
+
+  syntax-check:
+    name: Bash Syntax Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate bash syntax
+        run: |
+          for f in scripts/*.sh tls/*.sh; do
+            echo "Checking: $f"
+            bash -n "$f"
+          done
+
+  lint-actions:
+    name: Action Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate workflow files
+        run: |
+          for f in .github/workflows/*.yml; do
+            echo "Validating: $f"
+            python3 -c "import yaml; yaml.safe_load(open('$f'))"
+          done
+
+  kind-integration:
+    name: Kind Integration Test
+    runs-on: ubuntu-latest
+    needs: [shellcheck, syntax-check]
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Kind
+        uses: helm/kind-action@v1.12.0
+        with:
+          cluster_name: rancher-ci
+          node_image: kindest/node:v1.31.0
+          config: |
+            kind: Cluster
+            apiVersion: kind.x-k8s.io/v1alpha4
+            nodes:
+              - role: control-plane
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4.2.0
+        with:
+          version: latest
+
+      - name: Deploy Rancher (self-signed)
+        run: |
+          export RANCHER_HOSTNAME="rancher.ci.local"
+          export TLS_SOURCE="selfsigned"
+          export BOOTSTRAP_PASSWORD="ci-test-password"
+          export RANCHER_REPLICAS=1
+          export CERT_MANAGER_VERSION="1.16.3"
+          export K8S_DISTRO="kind"
+
+          ./scripts/deploy-rancher.sh
+
+      - name: Verify Rancher pods are running
+        run: |
+          kubectl wait --namespace cattle-system \
+            --for=condition=ready pod \
+            --selector=app=rancher \
+            --timeout=300s
+
+          kubectl get pods -n cattle-system
+          kubectl get svc -n cattle-system
+
+      - name: Verify bootstrap secret exists
+        run: |
+          kubectl get secret -n cattle-system bootstrap-secret -o jsonpath="{.data.bootstrapPassword}" | base64 -d
+          echo ""

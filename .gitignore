@@ -40,5 +40,16 @@ terraform.rc
 # *.dot
 
 # Optional: ignore plan files saved before destroying Terraform configuration
-# Uncomment the line below if you want to ignore planout files.
+# Uncomment the line below if you want to ignore plan outfiles.
 # planout
+
+# Generated certificates
+certs/
+tls/certs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Script logs
+*.log

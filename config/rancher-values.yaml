@@ -1,0 +1,44 @@
+# Rancher Helm values
+# Reference: https://ranchermanager.docs.rancher.com/getting-started/installation-and-update/installation-reference/helm-chart-options
+
+# Hostname for the Rancher server
+hostname: rancher.local
+
+# Number of replicas in the Rancher deployment
+replicas: 3
+
+# Audit log configuration
+auditLog:
+  level: 0
+
+# Set to false if you have your own ingress controller
+ingress:
+  tls:
+    # Options: rancher (self-signed), letsEncrypt, secret
+    source: rancher
+
+# Let's Encrypt configuration (used when ingress.tls.source=letsEncrypt)
+letsEncrypt:
+  email: ""
+  ingressClass: nginx
+
+# Resource limits for the Rancher pod
+resources:
+  requests:
+    cpu: 500m
+    memory: 1024Mi
+  limits:
+    cpu: 1000m
+    memory: 2048Mi
+
+# Rancher global settings
+global:
+  cattle:
+    psp:
+      enabled: false
+
+# Add custom CA certificate if using private CA
+# privateCA: true
+
+# Specify an existing TLS secret name (used when ingress.tls.source=secret)
+# tlsSecretName: tls-rancher-ingress
